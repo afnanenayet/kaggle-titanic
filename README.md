@@ -7,3 +7,11 @@ demographics.
 # Setup
 You can use conda for your setup or pip with a virtual environment. 
 
+We use the following packages:
+
+```
+scikit-learn
+pandas
+numpy
+```
+
