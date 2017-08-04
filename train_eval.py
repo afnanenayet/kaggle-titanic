@@ -10,7 +10,7 @@ def extract_clean_data(data_file_name):
     """ Extracts and does some preliminary feature reduction on the dataset
     data_file_name: string of the filename of the .csv file with our training 
     data
-    returns: a cleaned up pandas dataset
+    returns: a cleaned up pandas dataframe
     """
     data_frame =  pd.read_csv(data_file_name) 
 
@@ -81,13 +81,28 @@ def factor_column(df, col_names):
     return df[col_names].apply(lambda x: pd.factorize(x)[0])
 
 
-def eval_test_data(model, test_df):
+def eval_test_data(model, test_df, features):
     """ Evaluates the provided test data to rank the effectiveness of the 
     training function
     model: the trained model to evaluate
     test_df: the dataframe containing the test data
     """
-    pass # TODO
+    predict = model.predict(test_df[features])
+    print(predict)
+    return predict
+
+
+def load_test_data(filename, factor_col_names):
+    """ Loads, factorizes, cleans test data frame
+    filename: the file name of the test data set to load
+    factor_col_names: the name of the columns to factorie
+    """
+    # Loading pandas dataframe
+    test = pd.read_csv(filename)
+
+    # Factoring non-numerical columns
+    test[factor_col_names] = factor_column(test, factor_col_names)
+    return test
 
 
 def write_pred(pred_df, filename):
@@ -104,6 +119,7 @@ def main():
     """
     # Constants
     y_label = "Survived"
+    factor_cols = ["Embarked", "Sex"]
 
     # Load and clean training data
     print("Loading, cleaning, slicing training data...")
@@ -113,10 +129,24 @@ def main():
     # Printing info about training data to user
     print("Feature training dataframe shape:")
     print(training_data.count())
-    print(training_data)
 
+    # These are the features we will feed back into the estimator to 
+    # yield predictions
+    features = training_data.drop(y_label, axis = 1).columns
     # train the model
     estimator = train_model_rf(training_data, y_label)
+    print("Random forest estimator:")
+    print(estimator)
+
+    # test the model on the testing data
+    test_df = load_test_data("test.csv", factor_cols)
+
+    print("Test data count")
+    test_df.count()
+    test_df.drop("Cabin", axis = 1)
+    test_df.isnull().values.any()
+    # TODO get rid of the null values in the test data frame
+    eval_test_data(estimator, test_df, features) 
 
 
 # Wrapper for main function
