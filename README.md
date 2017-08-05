@@ -15,3 +15,9 @@ pandas
 numpy
 ```
 
+# Synopsis
+Currently, the challenge has been implemented with a random forest classifier.
+
+TODO:
+- implement solution with multi-layer perceptron with backprop
+
