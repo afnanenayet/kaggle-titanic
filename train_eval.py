@@ -50,6 +50,18 @@ def extract_clean_data(data_file_name):
     return data_frame
 
 
+def split_y_label(df, y_label):
+    """ Splits a data frame into a set of features and a y label axis 
+    df: the dataframe to split
+    y_label: the name of the column to split off as the y
+    returns (X, y) where X is the data frame with features and y is the 
+    data frame to train on 
+    """
+    features = df.drop(y_label, axis = 1).columns
+    X = df[features]
+    y = df[y_label]
+    return (X, y)
+
 def train_model_rf(train_data, tr_col_name):
     """Trains a random forest estimator on a set of test data 
     test_data: a pandas dataframe with the data we want to use for training
@@ -79,17 +91,14 @@ def train_model_mlp(train_data, tr_col_name):
     tr_col_name: the target classification to be used for training
     returns: a trained model
     """
-    pass # TODO
+    # Split off the labels for the training data 
+    (X, y) = split_y_label(train_data, tr_col_name)
+    clf = MLPClassifier()
+    clf.fit(X, y)
+    return clf
 
 
-def predict_mlp(model, test_df, features):
-    """ Evaluates the provided test data to determine the effectivness of the 
-    training function
-    """
-    pass # TODO
-
-
-def predict_rf(model, test_df, features):
+def predict_model(model, test_df, features):
     """ Evaluates the provided test data to rank the effectiveness of the 
     training function
     model: the trained model to evaluate
@@ -149,21 +158,27 @@ def main():
     # These are the features we will feed back into the estimator to 
     # yield predictions
     features = training_data.drop(y_label, axis = 1).columns
-    # train the model
+    # train the rf model
     print("Training random forest classifier with test data...")
     estimator = train_model_rf(training_data, y_label)
     print("Done")
     print()
     
-    # test the model on the testing data
+    # test the irf model on the testing data
     print("Loading test data...")
     test_df = load_test_data("test.csv", factor_cols)
     print("Done")
     print()
 
-    # Create predictions from the model using the testing data
+    ####### RANDOM FOREST ######
+    print("--Random forest classifier--")
+    print()
+
+    # Create predictions from the rf model using the testing data
     print("Making predictions with RF model...")
-    predictions = predict_rf(estimator, test_df, features) 
+    predictions = predict_model(estimator, test_df, features) 
+
+    # Convert prediction nparray to pandas dataframe
     predict_df = pd.DataFrame(
         data = predictions,
         columns = ["Survived"],
@@ -173,10 +188,35 @@ def main():
 
     # Write predictions to a CSV file based on the ID
     print("Writing random forest predictions to csv...")
-    write_pred(predict_df, test_df, "model_output_rf.csv", "PassengerId", "Survived")
+    write_pred(predict_df, test_df, "model_output_rf.csv", 
+               "PassengerId", "Survived")
     print("Done")
     print()
 
+    ###### Multilayer perceptron algorithm with backpropagation ######
+    print("--MLP backprop--")
+    print()
+
+    # train the MLP net
+    print("Training MLP...")
+    mlp_model = train_model_mlp(training_data, y_label)
+    print("Done")
+
+    # Create predictions with the MLP net
+    print("Making predictions with the MLP...")
+    mlp_predictions = predict_model(mlp_model, test_df, features)
+    print("Done")
+
+    # Convert predictions from multilayer perceptron to a pandas array
+    mlp_predictions = pd.DataFrame(
+        data = mlp_predictions,
+        columns = ["Survived"],
+    )
+
+    # Write MLP predictions to csv file
+    print("Writing MLP predictions to csv...")
+    write_pred(mlp_predictions, test_df, "model_output_mlp.csv", 
+               "PassengerId", "Survived")
     
 
 # Wrapper for main function
