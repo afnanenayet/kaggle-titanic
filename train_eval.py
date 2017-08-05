@@ -201,11 +201,13 @@ def main():
     print("Training MLP...")
     mlp_model = train_model_mlp(training_data, y_label)
     print("Done")
+    print()
 
     # Create predictions with the MLP net
     print("Making predictions with the MLP...")
     mlp_predictions = predict_model(mlp_model, test_df, features)
     print("Done")
+    print()
 
     # Convert predictions from multilayer perceptron to a pandas array
     mlp_predictions = pd.DataFrame(
@@ -217,6 +219,8 @@ def main():
     print("Writing MLP predictions to csv...")
     write_pred(mlp_predictions, test_df, "model_output_mlp.csv", 
                "PassengerId", "Survived")
+    print("Done")
+    print()
     
 
 # Wrapper for main function
