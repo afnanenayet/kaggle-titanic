@@ -41,21 +41,12 @@ def extract_clean_data(data_file_name):
     )
 
     imp = Imputer(strategy = "median")
-    num_df_filled = imp.fit_transform(num_df)
-
-    # Convert numpy array back into a Pandas dataframe type
-    num_df_filled = pd.DataFrame(num_df_filled, columns = num_df.columns)
-
-    # Join the imputed values with the non-numerical values
-    final_df = pd.concat(
-        [
-            num_df_filled, 
-            data_frame.drop("Age", axis = 1)
-        ], 
-        axis = 1, join = "inner"
-    )
-
-    return final_df
+    impute_cols = [
+        "Age",
+        "Fare",
+    ]
+    data_frame[impute_cols] = imp.fit_transform(data_frame[impute_cols])
+    return data_frame
 
 
 def train_model_rf(train_data, tr_col_name):
@@ -70,6 +61,8 @@ def train_model_rf(train_data, tr_col_name):
 
     # Extract the features to be used for training
     features = train_data.drop(tr_col_name, axis = 1).columns
+    print("Features:")
+    print(features)
     rf_classifier.fit(train_data[features], train_data[tr_col_name])
     return rf_classifier
 
@@ -98,10 +91,14 @@ def load_test_data(filename, factor_col_names):
     factor_col_names: the name of the columns to factorie
     """
     # Loading pandas dataframe
+    imp = Imputer(strategy = "median")
     test = pd.read_csv(filename)
-
+    age_col = test["Age"]
+    test[["Age", "Fare"]] = imp.fit_transform(test[["Age", "Fare"]])
     # Factoring non-numerical columns
     test[factor_col_names] = factor_column(test, factor_col_names)
+    # Cabin has NaN values, which we can't have in a random forest
+    test = test.drop("Cabin", axis = 1) 
     return test
 
 
@@ -125,27 +122,37 @@ def main():
     print("Loading, cleaning, slicing training data...")
     training_data = extract_clean_data("train.csv")
     print("Done")
+    print()
 
     # Printing info about training data to user
     print("Feature training dataframe shape:")
     print(training_data.count())
+    print()
+    print("Training data:")
+    print(training_data)
+    print()
 
     # These are the features we will feed back into the estimator to 
     # yield predictions
     features = training_data.drop(y_label, axis = 1).columns
     # train the model
     estimator = train_model_rf(training_data, y_label)
+
     print("Random forest estimator:")
     print(estimator)
+    print()
 
     # test the model on the testing data
     test_df = load_test_data("test.csv", factor_cols)
 
-    print("Test data count")
-    test_df.count()
-    test_df.drop("Cabin", axis = 1)
-    test_df.isnull().values.any()
-    # TODO get rid of the null values in the test data frame
+    print("Test data")
+    print(test_df)
+    print()
+
+    print("Null columns")
+    print(test_df.columns[test_df.isnull().any()].tolist())
+    print()
+
     eval_test_data(estimator, test_df, features) 
 
 
