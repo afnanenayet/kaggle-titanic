@@ -1,4 +1,5 @@
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import Imputer
 import pandas as pd
 import numpy as np
@@ -72,13 +73,28 @@ def factor_column(df, col_names):
     return df[col_names].apply(lambda x: pd.factorize(x)[0])
 
 
-def eval_test_data(model, test_df, features):
+def train_model_mlp(train_data, tr_col_name):
+    """Trains a multi layer perceptron/neural net on a set of test data
+    train_data: a pandas dataframe with the data to be used for training
+    tr_col_name: the target classification to be used for training
+    returns: a trained model
+    """
+    pass # TODO
+
+
+def predict_mlp(model, test_df, features):
+    """ Evaluates the provided test data to determine the effectivness of the 
+    training function
+    """
+    pass # TODO
+
+
+def predict_rf(model, test_df, features):
     """ Evaluates the provided test data to rank the effectiveness of the 
     training function
     model: the trained model to evaluate
     test_df: the dataframe containing the test data
     """
-    
     return model.predict(test_df[features])
 
 
@@ -146,8 +162,8 @@ def main():
     print()
 
     # Create predictions from the model using the testing data
-    print("Making predictions from RF model...")
-    predictions = eval_test_data(estimator, test_df, features) 
+    print("Making predictions with RF model...")
+    predictions = predict_rf(estimator, test_df, features) 
     predict_df = pd.DataFrame(
         data = predictions,
         columns = ["Survived"],
@@ -156,8 +172,8 @@ def main():
     print()
 
     # Write predictions to a CSV file based on the ID
-    print("Writing prediction to csv...")
-    write_pred(predict_df, test_df, "model_output.csv", "PassengerId", "Survived")
+    print("Writing random forest predictions to csv...")
+    write_pred(predict_df, test_df, "model_output_rf.csv", "PassengerId", "Survived")
     print("Done")
     print()
 
@@ -166,5 +182,4 @@ def main():
 # Wrapper for main function
 if __name__ == "__main__":
     main()
-
 
