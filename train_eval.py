@@ -61,8 +61,6 @@ def train_model_rf(train_data, tr_col_name):
 
     # Extract the features to be used for training
     features = train_data.drop(tr_col_name, axis = 1).columns
-    print("Features:")
-    print(features)
     rf_classifier.fit(train_data[features], train_data[tr_col_name])
     return rf_classifier
 
@@ -80,9 +78,8 @@ def eval_test_data(model, test_df, features):
     model: the trained model to evaluate
     test_df: the dataframe containing the test data
     """
-    predict = model.predict(test_df[features])
-    print(predict)
-    return predict
+    
+    return model.predict(test_df[features])
 
 
 def load_test_data(filename, factor_col_names):
@@ -102,13 +99,15 @@ def load_test_data(filename, factor_col_names):
     return test
 
 
-def write_pred(pred_df, filename):
+def write_pred(pred_df, test_df, filename):
     """ Writes the predictions obtained by the estimator to a CSV file as 
     specified by the filename
     pred_df: a dataframe containing the predictions created by the estimator
+    test_df: the testing dataframe
     filename: the desired filename to write the predictions to disk 
     """
-    pass # TODO
+    final_df = pd.concat([test_df["PassengerId"], pred_df], axis = 1)
+    csv = final_df.to_csv(path_or_buf = filename)
 
 
 def main():
@@ -119,42 +118,39 @@ def main():
     factor_cols = ["Embarked", "Sex"]
 
     # Load and clean training data
-    print("Loading, cleaning, slicing training data...")
+    print("Loading, cleaning training data...") 
     training_data = extract_clean_data("train.csv")
     print("Done")
-    print()
-
-    # Printing info about training data to user
-    print("Feature training dataframe shape:")
-    print(training_data.count())
-    print()
-    print("Training data:")
-    print(training_data)
     print()
 
     # These are the features we will feed back into the estimator to 
     # yield predictions
     features = training_data.drop(y_label, axis = 1).columns
     # train the model
+    print("Training random forest classifier with test data...")
     estimator = train_model_rf(training_data, y_label)
-
-    print("Random forest estimator:")
-    print(estimator)
+    print("Done")
     print()
-
+    
     # test the model on the testing data
+    print("Loading test data...")
     test_df = load_test_data("test.csv", factor_cols)
-
-    print("Test data")
-    print(test_df)
+    print("Done")
     print()
 
-    print("Null columns")
-    print(test_df.columns[test_df.isnull().any()].tolist())
+    # Create predictions from the model using the testing data
+    print("Making predictions from RF model...")
+    predictions = eval_test_data(estimator, test_df, features) 
+    print("Done")
     print()
 
-    eval_test_data(estimator, test_df, features) 
+    # Write predictions to a CSV file based on the ID
+    print("Writing prediction to csv...")
+    write_pred(predictions, test_df, "model_output.csv")
+    print("Done")
+    print()
 
+    
 
 # Wrapper for main function
 if __name__ == "__main__":
