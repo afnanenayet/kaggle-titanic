@@ -5,7 +5,7 @@ predict whether a passenger on the Titanic would survive based on their
 demographics.
 
 # Setup
-You can use conda for your setup or pip with a virtual environment. 
+You can use conda for your setup or pip/with a virtual environment. 
 
 We use the following packages:
 
@@ -16,8 +16,10 @@ numpy
 ```
 
 # Synopsis
-Currently, the challenge has been implemented with a random forest classifier.
 
-TODO:
-- implement solution with multi-layer perceptron with backprop
+Here are the algorithms that have been implemented so far and their respective scores in the Kaggle 
+competition.
 
+|  random forest classifier |  multi-layer perceptron with backprop  |   
+|---|---|
+| 0.73684 |  0.70335 |
