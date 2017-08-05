@@ -4,8 +4,12 @@ from sklearn.preprocessing import Imputer
 import pandas as pd
 import numpy as np
 
-# This trains and evaluates the Titanic model for the Kaggle DS Titanic 
-# competition
+# This trains and evaluates the Titanic model for the Kaggle DS Titanic
+# competition using:
+#  - random forest classification
+#  - a multilayer perceptron with backprop
+#
+
 
 def extract_clean_data(data_file_name):
     """ Extracts and does some preliminary feature reduction on the dataset
@@ -13,17 +17,17 @@ def extract_clean_data(data_file_name):
     data
     returns: a cleaned up pandas dataframe
     """
-    data_frame =  pd.read_csv(data_file_name) 
+    data_frame = pd.read_csv(data_file_name)
 
     # Cleaning up data frame, dropping unecessary columns
     data_frame = data_frame.drop(
         [
-            "PassengerId", 
+            "PassengerId",
             "Name",
             "Ticket",
-            "Cabin", # TODO strip and factorize
-        ], 
-        axis = 1
+            "Cabin",  # TODO strip and factorize
+        ],
+        axis=1
     )
 
     factor_cols = ["Embarked", "Sex"]
@@ -31,17 +35,17 @@ def extract_clean_data(data_file_name):
     data_frame[factor_cols] = factor_column(data_frame, factor_cols)
 
     # Some age values are missing, replace them with median age of dataset
-    # the imputer requires a data frame with only numerical values, the 
+    # the imputer requires a data frame with only numerical values, the
     # new dataframe drops all of the non-numerical values
     num_df = data_frame.drop(
         [
             "Embarked",
             "Sex",
         ],
-        axis = 1
+        axis=1
     )
 
-    imp = Imputer(strategy = "median")
+    imp = Imputer(strategy="median")
     impute_cols = [
         "Age",
         "Fare",
@@ -57,10 +61,11 @@ def split_y_label(df, y_label):
     returns (X, y) where X is the data frame with features and y is the 
     data frame to train on 
     """
-    features = df.drop(y_label, axis = 1).columns
+    features = df.drop(y_label, axis=1).columns
     X = df[features]
     y = df[y_label]
     return (X, y)
+
 
 def train_model_rf(train_data, tr_col_name):
     """Trains a random forest estimator on a set of test data 
@@ -70,10 +75,10 @@ def train_model_rf(train_data, tr_col_name):
     """
     # Create a random forest classifier
     # -1 sets num jobs to num cores
-    rf_classifier = RandomForestClassifier(n_jobs = -1) 
+    rf_classifier = RandomForestClassifier(n_jobs=-1)
 
     # Extract the features to be used for training
-    features = train_data.drop(tr_col_name, axis = 1).columns
+    features = train_data.drop(tr_col_name, axis=1).columns
     rf_classifier.fit(train_data[features], train_data[tr_col_name])
     return rf_classifier
 
@@ -91,7 +96,7 @@ def train_model_mlp(train_data, tr_col_name):
     tr_col_name: the target classification to be used for training
     returns: a trained model
     """
-    # Split off the labels for the training data 
+    # Split off the labels for the training data
     (X, y) = split_y_label(train_data, tr_col_name)
     clf = MLPClassifier()
     clf.fit(X, y)
@@ -113,14 +118,14 @@ def load_test_data(filename, factor_col_names):
     factor_col_names: the name of the columns to factorie
     """
     # Loading pandas dataframe
-    imp = Imputer(strategy = "median")
+    imp = Imputer(strategy="median")
     test = pd.read_csv(filename)
     age_col = test["Age"]
     test[["Age", "Fare"]] = imp.fit_transform(test[["Age", "Fare"]])
     # Factoring non-numerical columns
     test[factor_col_names] = factor_column(test, factor_col_names)
     # Cabin has NaN values, which we can't have in a random forest
-    test = test.drop("Cabin", axis = 1) 
+    test = test.drop("Cabin", axis=1)
     return test
 
 
@@ -136,9 +141,9 @@ def write_pred(pred_df, test_df, filename, id_col, data_col):
 
     # Specify order of columns/format
     csv = pred_df.to_csv(
-        path_or_buf = filename, 
-        index = False,
-        columns = [id_col, data_col],
+        path_or_buf=filename,
+        index=False,
+        columns=[id_col, data_col],
     )
 
 
@@ -150,20 +155,20 @@ def main():
     factor_cols = ["Embarked", "Sex"]
 
     # Load and clean training data
-    print("Loading, cleaning training data...") 
+    print("Loading, cleaning training data...")
     training_data = extract_clean_data("train.csv")
     print("Done")
     print()
 
-    # These are the features we will feed back into the estimator to 
+    # These are the features we will feed back into the estimator to
     # yield predictions
-    features = training_data.drop(y_label, axis = 1).columns
+    features = training_data.drop(y_label, axis=1).columns
     # train the rf model
     print("Training random forest classifier with test data...")
     estimator = train_model_rf(training_data, y_label)
     print("Done")
     print()
-    
+
     # test the irf model on the testing data
     print("Loading test data...")
     test_df = load_test_data("test.csv", factor_cols)
@@ -176,19 +181,19 @@ def main():
 
     # Create predictions from the rf model using the testing data
     print("Making predictions with RF model...")
-    predictions = predict_model(estimator, test_df, features) 
+    predictions = predict_model(estimator, test_df, features)
 
     # Convert prediction nparray to pandas dataframe
     predict_df = pd.DataFrame(
-        data = predictions,
-        columns = ["Survived"],
+        data=predictions,
+        columns=["Survived"],
     )
     print("Done")
     print()
 
     # Write predictions to a CSV file based on the ID
     print("Writing random forest predictions to csv...")
-    write_pred(predict_df, test_df, "model_output_rf.csv", 
+    write_pred(predict_df, test_df, "model_output_rf.csv",
                "PassengerId", "Survived")
     print("Done")
     print()
@@ -211,19 +216,18 @@ def main():
 
     # Convert predictions from multilayer perceptron to a pandas array
     mlp_predictions = pd.DataFrame(
-        data = mlp_predictions,
-        columns = ["Survived"],
+        data=mlp_predictions,
+        columns=["Survived"],
     )
 
     # Write MLP predictions to csv file
     print("Writing MLP predictions to csv...")
-    write_pred(mlp_predictions, test_df, "model_output_mlp.csv", 
+    write_pred(mlp_predictions, test_df, "model_output_mlp.csv",
                "PassengerId", "Survived")
     print("Done")
     print()
-    
+
 
 # Wrapper for main function
 if __name__ == "__main__":
     main()
-
