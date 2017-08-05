@@ -99,15 +99,22 @@ def load_test_data(filename, factor_col_names):
     return test
 
 
-def write_pred(pred_df, test_df, filename):
+def write_pred(pred_df, test_df, filename, id_col, data_col):
     """ Writes the predictions obtained by the estimator to a CSV file as 
     specified by the filename
     pred_df: a dataframe containing the predictions created by the estimator
     test_df: the testing dataframe
     filename: the desired filename to write the predictions to disk 
     """
-    final_df = pd.concat([test_df["PassengerId"], pred_df], axis = 1)
-    csv = final_df.to_csv(path_or_buf = filename)
+    # Append id column from test dataset to predictions for submission
+    pred_df[id_col] = test_df[id_col]
+
+    # Specify order of columns/format
+    csv = pred_df.to_csv(
+        path_or_buf = filename, 
+        index = False,
+        columns = [id_col, data_col],
+    )
 
 
 def main():
@@ -141,12 +148,16 @@ def main():
     # Create predictions from the model using the testing data
     print("Making predictions from RF model...")
     predictions = eval_test_data(estimator, test_df, features) 
+    predict_df = pd.DataFrame(
+        data = predictions,
+        columns = ["Survived"],
+    )
     print("Done")
     print()
 
     # Write predictions to a CSV file based on the ID
     print("Writing prediction to csv...")
-    write_pred(predictions, test_df, "model_output.csv")
+    write_pred(predict_df, test_df, "model_output.csv", "PassengerId", "Survived")
     print("Done")
     print()
 
